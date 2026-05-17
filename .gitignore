@@ -1,0 +1,7 @@
+*.bak
+*.backup
+*.backup.*.json
+*.backup.*.ps1
+.vs/
+.vscode/
+*.log
