@@ -1,14 +1,15 @@
 ---
 name: windows-terminal-wezterm-port
-description: Apply WezTerm aesthetics (Catppuccin Mocha, JetBrainsMono Nerd Font, filled-block cursor, generous padding, oh-my-posh prompt) to Windows Terminal in one command. Windows-only. Triggers on "make PowerShell look like WezTerm", "WezTerm style for Windows Terminal", "Catppuccin Mocha PowerShell", "wezterm port windows", "윈도우 터미널 wezterm 스타일", "파워셸 카푸치노 mocha".
+description: Applies a WezTerm-style theme (Catppuccin Mocha, JetBrainsMono Nerd Font, oh-my-posh prompt) to Windows Terminal and PowerShell. Windows-only. Use when the user wants Windows Terminal or PowerShell styled like WezTerm or asks for Catppuccin on Windows.
+allowed-tools: Bash(git *) Bash(pwsh *) Bash(winget *) Bash(ls *) Read Edit Write
 ---
 
-# windows-terminal-wezterm-port skill
+# windows-terminal-wezterm-port
 
-Windows-only. Brings the WezTerm look — Catppuccin Mocha palette,
-JetBrainsMono Nerd Font Mono, filled-block cursor, 10/7.5 padding, and an
-`oh-my-posh` prompt — to Windows Terminal by patching its `settings.json`
-non-destructively.
+Operates the installer at <https://github.com/cskwork/windows-terminal-wezterm-port>
+to apply a WezTerm-style look to Windows Terminal + PowerShell in one
+command. All edits are reversible (timestamped backups, fenced PROFILE
+block).
 
 ## When to use this skill
 
@@ -88,17 +89,27 @@ the live `settings.json`.
 
 ## Known gotchas
 
-- **The Microsoft Store package path uses `8wekyb3d8bbwe`** (no `c`). A common
-  typo is `8wekyb3d8bbcwe`; if you copy a path from another doc, double-check.
+- **Nerd Fonts v3 uses short family names** (`JetBrainsMono NFM`, `... NF`,
+  `... NFP`), not the pre-v3 `JetBrainsMono Nerd Font Mono`. The installer
+  defaults to the v3 short name and prints the registered JetBrains
+  families if the requested face does not match.
+- **`oh-my-posh font install` requires `--headless`**, not `--user`. The
+  installer uses the correct flag; do not invoke `--user`.
+- **`.ttf` files on disk are not enough** — they must be registered in
+  `HKCU\Software\Microsoft\Windows NT\CurrentVersion\Fonts`. Running with
+  `-InstallFont` writes both.
+- **`$env:POSH_THEMES_PATH` is null after winget MSIX install**. The
+  installer-emitted `$PROFILE` block resolves the themes directory from
+  the `oh-my-posh.exe` location (via the WindowsApps symlink target) and
+  falls back to the default theme if nothing resolves.
+- **Microsoft Store package family is `8wekyb3d8bbwe`** (no `c`). A common
+  typo is `8wekyb3d8bbcwe`; double-check when copying paths.
+- **Per-profile overrides win over `profiles.defaults`**. If a single shell
+  still looks wrong, check whether that profile in `profiles.list` has
+  explicit `font` or `colorScheme` keys.
 - **`useAcrylic: false` is forced** so the Catppuccin background renders
-  cleanly. If the user explicitly wants acrylic, override per-profile in
-  `profiles.list` (defaults are inherited, not enforced).
-- **Per-profile overrides win** over `profiles.defaults`. If a single shell
-  still looks wrong, check whether that shell's profile has explicit `font`
-  or `colorScheme` keys in `profiles.list`.
-- **`oh-my-posh font install JetBrainsMono` is interactive** in some
-  versions; if it prompts for a font variant, choose `Mono` for terminal use.
-- **PowerShell ISE does not honor the WT settings**. The script targets
+  cleanly. Override per-profile in `profiles.list` if needed.
+- **PowerShell ISE does not honor the WT settings** — script targets
   Windows Terminal + pwsh / PowerShell, not ISE.
 
 ## Customization knobs
@@ -109,7 +120,7 @@ All parameters of `make-profile.ps1`:
 |---------------------|--------------------------------------|----------------------------------------------------|
 | `-Scheme`           | `Catppuccin Mocha`                   | Only Catppuccin Mocha is bundled; can target any   |
 |                     |                                      | existing scheme name in `settings.json`            |
-| `-Font`             | `JetBrainsMono Nerd Font Mono`       | Must already be installed (or use `-InstallFont`)  |
+| `-Font`             | `JetBrainsMono NFM`                  | Nerd Fonts v3 short name; must be registered       |
 | `-FontSize`         | `12`                                 | Points                                             |
 | `-FontWeight`       | `medium`                             | `normal`, `medium`, `bold`, etc.                   |
 | `-CursorShape`      | `filledBox`                          | WezTerm `BlinkingBlock` equivalent                 |
