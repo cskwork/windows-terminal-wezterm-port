@@ -400,18 +400,29 @@ Merge-TopLevel -Settings $settings -Overrides ([ordered]@{
     copyOnSelect                          = $true
     'experimental.rightClickContextMenu'  = $false
 })
+# Windows Terminal's modern schema splits "action definition" from "keybinding":
+#   { "id": "...", "command": ... }        defines the action
+#   { "id": "...", "keys": "..." }         binds a key to that id
+# If both command and keys live in a single entry, WT silently drops keys on its
+# next settings reload — leaving the binding inert. Emit two entries each.
 Merge-Actions -Settings $settings -NewActions @(
     [ordered]@{
         id      = 'User.wezterm-port.copy'
         name    = 'Copy (wezterm-port)'
         command = [ordered]@{ action = 'copy'; singleLine = $false }
-        keys    = 'ctrl+c'
+    },
+    [ordered]@{
+        id   = 'User.wezterm-port.copy'
+        keys = 'ctrl+c'
     },
     [ordered]@{
         id      = 'User.wezterm-port.paste'
         name    = 'Paste (wezterm-port)'
         command = 'paste'
-        keys    = 'ctrl+v'
+    },
+    [ordered]@{
+        id   = 'User.wezterm-port.paste'
+        keys = 'ctrl+v'
     }
 )
 
