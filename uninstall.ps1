@@ -86,9 +86,30 @@ else {
         $settings['profiles']['defaults'] = $defaults
     }
 
+    # Top-level copy/paste UX flags this installer adds.
+    foreach ($k in 'copyOnSelect', 'experimental.rightClickContextMenu') {
+        if ($settings.Contains($k)) { $settings.Remove($k) }
+    }
+
+    # Only remove action entries we own (id-prefixed). Never touch user-defined
+    # ctrl+c/ctrl+v bindings that existed before.
+    if ($settings.Contains('actions')) {
+        $settings['actions'] = @($settings['actions'] | Where-Object {
+            $entry = $_
+            $id = $null
+            if ($entry -is [hashtable] -or $entry -is [System.Collections.Specialized.OrderedDictionary]) {
+                if ($entry.Contains('id')) { $id = $entry['id'] }
+            } else {
+                $prop = $entry.PSObject.Properties['id']
+                if ($prop) { $id = $prop.Value }
+            }
+            -not ($id -and $id.StartsWith('User.wezterm-port.'))
+        })
+    }
+
     if ($PSCmdlet.ShouldProcess($settingsPath, 'remove wezterm-port keys')) {
         Set-Content -LiteralPath $settingsPath -Value (ConvertTo-Json $settings -Depth 100) -Encoding UTF8
-        Write-Host "  removed scheme + defaults overrides" -ForegroundColor Green
+        Write-Host "  removed scheme + defaults + copy/paste overrides" -ForegroundColor Green
     }
 }
 

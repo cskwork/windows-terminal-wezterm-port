@@ -74,6 +74,9 @@ Before running, verify:
      `Catppuccin Mocha` entry appears in `schemes`.
    - Confirming `profiles.defaults` now contains the expected `colorScheme`,
      `font`, `cursorShape`, `padding` keys.
+   - Confirming `copyOnSelect: true` is at the top level and the global
+     `actions` array contains two entries with ids
+     `User.wezterm-port.copy` (`ctrl+c`) and `User.wezterm-port.paste` (`ctrl+v`).
    - Confirming a `# >>> wezterm-port` fenced block is in `$PROFILE`.
    - Asking the user to open a new Windows Terminal tab (no restart needed).
 
@@ -111,6 +114,11 @@ the live `settings.json`.
   cleanly. Override per-profile in `profiles.list` if needed.
 - **PowerShell ISE does not honor the WT settings** — script targets
   Windows Terminal + pwsh / PowerShell, not ISE.
+- **`Ctrl+C` is a smart copy, not a hard binding** — Windows Terminal's `copy`
+  action is a no-op when no text is selected, so `Ctrl+C` still passes through
+  to the shell as SIGINT and interrupts running commands. If the user reports
+  "Ctrl+C broke my interrupt", they have selected text — clearing the selection
+  restores normal behavior.
 
 ## Customization knobs
 

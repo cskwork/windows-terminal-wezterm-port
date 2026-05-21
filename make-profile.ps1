@@ -185,6 +185,52 @@ function Merge-Defaults {
     $Settings['profiles']['defaults'] = $defaults
 }
 
+function Get-EntryField {
+    # Read a named field from a settings entry regardless of whether the JSON
+    # deserialized into a hashtable, ordered dictionary, or PSCustomObject.
+    param($Entry, [string] $Field)
+    if ($null -eq $Entry) { return $null }
+    if ($Entry -is [hashtable] -or $Entry -is [System.Collections.Specialized.OrderedDictionary]) {
+        if ($Entry.Contains($Field)) { return $Entry[$Field] }
+        return $null
+    }
+    $prop = $Entry.PSObject.Properties[$Field]
+    if ($prop) { return $prop.Value }
+    return $null
+}
+
+function Merge-TopLevel {
+    param(
+        [Parameter(Mandatory)] $Settings,
+        [Parameter(Mandatory)] [hashtable] $Overrides
+    )
+    foreach ($k in $Overrides.Keys) {
+        $Settings[$k] = $Overrides[$k]
+    }
+}
+
+function Merge-Actions {
+    # Append our action entries to the global 'actions' array. Dedup by id and
+    # by keys so re-running the installer never duplicates and any user binding
+    # on the same key is replaced (this is the whole point of the port: own
+    # Ctrl+C / Ctrl+V as copy/paste).
+    param(
+        [Parameter(Mandatory)] $Settings,
+        [Parameter(Mandatory)] $NewActions
+    )
+    if (-not $Settings.Contains('actions')) { $Settings['actions'] = @() }
+    $newIds  = @($NewActions | ForEach-Object { Get-EntryField $_ 'id' }   | Where-Object { $_ })
+    $newKeys = @($NewActions | ForEach-Object { Get-EntryField $_ 'keys' } | Where-Object { $_ })
+    $kept = @($Settings['actions'] | Where-Object {
+        $entry = $_
+        $entryId   = Get-EntryField $entry 'id'
+        $entryKeys = Get-EntryField $entry 'keys'
+        -not (($entryId -and ($newIds -contains $entryId)) -or
+              ($entryKeys -and ($newKeys -contains $entryKeys)))
+    })
+    $Settings['actions'] = @($kept + $NewActions)
+}
+
 function Install-OhMyPoshIfMissing {
     if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
         Write-Host "  oh-my-posh already installed" -ForegroundColor DarkGray
@@ -343,12 +389,39 @@ if ($Backdrop) {
 }
 Merge-Defaults -Settings $settings -Overrides $overrides
 
+# Copy/paste UX (WezTerm-style):
+#   - select-to-copy via copyOnSelect
+#   - right-click pastes (or copies if selection exists) by disabling the
+#     experimental context menu
+#   - Ctrl+C / Ctrl+V keybindings (Windows Terminal's `copy` action is a no-op
+#     when no text is selected, so Ctrl+C still passes through to the shell as
+#     SIGINT — exactly the smart behavior users expect)
+Merge-TopLevel -Settings $settings -Overrides ([ordered]@{
+    copyOnSelect                          = $true
+    'experimental.rightClickContextMenu'  = $false
+})
+Merge-Actions -Settings $settings -NewActions @(
+    [ordered]@{
+        id      = 'User.wezterm-port.copy'
+        name    = 'Copy (wezterm-port)'
+        command = [ordered]@{ action = 'copy'; singleLine = $false }
+        keys    = 'ctrl+c'
+    },
+    [ordered]@{
+        id      = 'User.wezterm-port.paste'
+        name    = 'Paste (wezterm-port)'
+        command = 'paste'
+        keys    = 'ctrl+v'
+    }
+)
+
 $json = ConvertTo-Json $settings -Depth 100
 
 if ($PSCmdlet.ShouldProcess($settingsPath, 'patch Windows Terminal settings')) {
     Backup-File -Path $settingsPath | Out-Null
     Set-Content -LiteralPath $settingsPath -Value $json -Encoding UTF8
     Write-Host "  patched: scheme '$Scheme' + font '$Font $FontSize' + cursor '$CursorShape'" -ForegroundColor Green
+    Write-Host "  copy/paste: select-to-copy + right-click paste + Ctrl+C/Ctrl+V (Ctrl+C still SIGINTs when nothing selected)" -ForegroundColor DarkGray
 }
 
 if ($InstallOhMyPosh) { Install-OhMyPoshIfMissing }

@@ -19,6 +19,8 @@ This is the Windows counterpart to
 | `backdrops/*` random rotation            | Single static image (configurable)       |
 | Window padding (top 10, bottom 7.5)      | `padding: "10, 7.5"`                     |
 | Prompt with git / path / glyphs          | `oh-my-posh` with `catppuccin_mocha`     |
+| Select-to-copy + right-click paste       | `copyOnSelect: true` + default right-click paste |
+| `Ctrl+Shift+C` / `Ctrl+Shift+V` copy/paste | also `Ctrl+C` / `Ctrl+V` (smart copy: passes through to SIGINT when no selection) |
 
 What does **not** port (Windows Terminal does not support it natively):
 
@@ -106,6 +108,25 @@ idempotent. The previous values are overwritten, not duplicated.
 Existing profiles, schemes, keybindings, and customizations are left
 untouched. Anything you set inside an individual profile in `profiles.list`
 overrides the defaults.
+
+## Copy & paste
+
+The installer sets up WezTerm-style mouse + keyboard copy/paste at the global
+level (applies to every profile):
+
+- **Select to copy** — drag-select with the mouse and the text is copied to
+  the clipboard immediately on release (`copyOnSelect: true`).
+- **Right-click paste** — right-click pastes from clipboard; if you have an
+  active selection the right-click copies it instead. The experimental
+  right-click context menu is explicitly disabled.
+- **Ctrl+C / Ctrl+V** — copy and paste. `Ctrl+C` is a *smart* copy: when no
+  text is selected the key falls through to the shell as SIGINT, so
+  interrupting a running command still works. The original
+  `Ctrl+Shift+C` / `Ctrl+Shift+V` bindings keep working too.
+
+These bindings carry `id`s prefixed with `User.wezterm-port.`, so the
+uninstaller can remove them without disturbing any of your own
+`ctrl+c`/`ctrl+v` keybindings that existed before.
 
 ## Troubleshooting
 
