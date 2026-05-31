@@ -1,13 +1,37 @@
 # windows-terminal-wezterm-port
 
+> Deprecated: this Windows-only repo has moved into
+> [cskwork/terminal-theme](https://github.com/cskwork/terminal-theme).
+> Use `terminal-theme` for iTerm2, WezTerm, Windows Terminal, PowerShell, and
+> applicable terminal theme outputs from one repo.
+
+## Replacement
+
+```powershell
+git clone https://github.com/cskwork/terminal-theme
+cd terminal-theme
+
+pwsh -ExecutionPolicy Bypass -File .\make-profile.ps1 -InstallOhMyPosh -InstallFont
+```
+
+For portable config files:
+
+```bash
+python3 terminal-theme.py --target all --output-dir dist
+```
+
+This repository is kept only as a historical pointer for existing links.
+
+## Historical Scope
+
 Port WezTerm aesthetics to Windows Terminal in one command. Catppuccin Mocha
 palette, JetBrainsMono Nerd Font, optional darkened background image,
 filled-block cursor, generous padding — applied to the global profile
 `defaults` block so every shell (PowerShell, pwsh, WSL, Git Bash, cmd) gets
 the same look without restarting Windows Terminal.
 
-This is the Windows counterpart to
-[cskwork/iterm2-wezterm-port](https://github.com/cskwork/iterm2-wezterm-port).
+This was the Windows counterpart to the former iTerm2 repo, now consolidated
+into [cskwork/terminal-theme](https://github.com/cskwork/terminal-theme).
 
 ## What it ports from WezTerm
 
